@@ -1,0 +1,54 @@
+# ============================
+# PYTHON / DJANGO
+# ============================
+
+# Байт-код и кэш
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Виртуальное окружение
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# База данных
+*.sqlite3
+*.db
+*.sqlite3-journal
+
+# Django специфичное
+*.log
+*.pot
+*.mo
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+migrations/
+!*/migrations/__init__.py
+
+# Статика и медиа (если собираете их локально)
+staticfiles/
+media/
+
+# ============================
+# ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
+# ============================
+.env
+.env.*
+!.env.example
+
+# ============================
+# РЕДАКТОРЫ И ОС
+# ============================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
