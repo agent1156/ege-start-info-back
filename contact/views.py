@@ -4,7 +4,10 @@ from .models import ContactRequest
 from .serializers import ContactRequestSerializer
 
 class ContactRequestCreateView(generics.CreateAPIView):
-    """Прием заявок с формы обратной связи"""
+    """
+    API для приема заявок с формы обратной связи.
+    Разрешает доступ без авторизации (AllowAny).
+    """
     queryset = ContactRequest.objects.all()
     serializer_class = ContactRequestSerializer
-    permission_classes = [AllowAny] # Разрешаем доступ без авторизации
+    permission_classes = [AllowAny]
