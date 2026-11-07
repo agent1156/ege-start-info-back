@@ -15,6 +15,7 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Application definition
 INSTALLED_APPS = [
+    "jazzmin",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -112,4 +113,49 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ]
+}
+
+# =========================================
+# НАСТРОЙКИ ДИЗАЙНА АДМИНКИ (JAZZMIN)
+# =========================================
+JAZZMIN_SETTINGS = {
+    # Заголовки
+    "site_title": "IT START Admin",
+    "site_header": "IT START",
+    "site_brand": "IT START", # Логотип или текст в левом верхнем углу
+    "welcome_sign": "Добро пожаловать в панель управления",
+    "copyright": "IT START © 2026",
+
+    # Ссылки в верхнем меню
+    "topmenu_links": [
+        {"name": "На сайт", "url": "http://localhost:3000", "new_window": True},
+    ],
+
+    # Иконки для моделей (можно использовать FontAwesome)
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "contact.contactrequest": "fas fa-envelope", # Иконка для ваших заявок
+    },
+
+    # Кастомизация цветов (UI Tweaks)
+    "ui_tweaks": {
+        "navbar": "navbar-dark", # Темная шапка
+        "no_navbar_border": True,
+        "sidebar": "sidebar-dark-primary", # Темный сайдбар
+        "sidebar_nav_child_indent": True,
+        "sidebar_nav_compact_style": True,
+        "sidebar_nav_legacy_style": False,
+        "sidebar_nav_flat_style": False,
+        "theme": "default", # Можно попробовать "darkly", "flatly" и т.д.
+        "button_classes": {
+            "primary": "btn-primary",
+            "secondary": "btn-secondary",
+            "info": "btn-info",
+            "warning": "btn-warning",
+            "danger": "btn-danger",
+            "success": "btn-success"
+        }
+    }
 }
