@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     # Ваши приложения
     'api',
     'contact', 
+    'tasks',
 ]
 
 MIDDLEWARE = [
