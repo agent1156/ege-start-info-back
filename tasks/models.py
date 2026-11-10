@@ -16,7 +16,7 @@ class TaskYear(models.Model):
     class Meta:
         verbose_name = 'Год задачи'
         verbose_name_plural = 'Годы задач'
-        ordering = ['-year'] # Сначала новые
+        ordering = ['-year']  # Сначала новые
 
     def __str__(self):
         return str(self.year)
@@ -134,6 +134,24 @@ class Task(models.Model):
         verbose_name='Сложность'
     )
 
+    # ===== НОВЫЕ ПОЛЯ ДЛЯ ПАРСЕРА =====
+    external_id = models.PositiveIntegerField(
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name='ID на источнике',
+        help_text='Номер задачи на kpolyakov.spb.ru (например, 9296)'
+    )
+
+    image_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default='',
+        verbose_name='Ссылка на картинку (источник)',
+        help_text='Прямая ссылка на .gif/.png с сайта-источника'
+    )
+
     # ===== ОСНОВНЫЕ ПОЛЯ =====
     text = models.TextField(
         verbose_name='Текст задачи'
@@ -149,7 +167,9 @@ class Task(models.Model):
 
     answer = models.CharField(
         max_length=255, 
-        verbose_name='Ответ'
+        verbose_name='Ответ',
+        blank=True,
+        default=''
     )
 
     video_url = models.URLField(
