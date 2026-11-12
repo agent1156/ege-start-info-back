@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils.text import slugify
+from pytils.translit import slugify as ru_slugify 
 
 
 # ==========================================
@@ -49,7 +51,6 @@ class TaskDifficulty(models.Model):
         verbose_name='Уровень сложности'
     )
     
-    # Можно добавить цвет для красивого бейджа в админке
     color = models.CharField(
         max_length=7, 
         default='#64748b', 
@@ -81,6 +82,20 @@ class TaskNumber(models.Model):
         help_text='Например: Графы, Логика, Программирование'
     )
 
+    max_score = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name='Первичный балл',
+        help_text='Сколько баллов дают за это задание'
+    )
+
+    slug = models.SlugField(
+        max_length=255, 
+        unique=True,   # <-- Включили уникальность
+        blank=True,    # <-- Разрешили быть пустым (заполнится автоматически)
+        verbose_name='ЧПУ (URL)',
+        help_text='Например: 1-analiz-modeley'
+    )
+
     class Meta:
         verbose_name = 'Номер задания'
         verbose_name_plural = 'Номера заданий (справочник)'
@@ -91,6 +106,19 @@ class TaskNumber(models.Model):
             return f'Задание {self.number}: {self.topic}'
         return f'Задание {self.number}'
 
+    def save(self, *args, **kwargs):
+        # Автогенерация слага, если он пустой
+        if not self.slug:
+            # 1. Берем тему (или пустую строку, если темы нет)
+            base_text = self.topic if self.topic else "zadanie"
+            
+            # 2. Транслитерация (Привет -> privet)
+            transliterated = ru_slugify(base_text)
+            
+            # 3. Очистка от спецсимволов и генерация слага
+            self.slug = slugify(transliterated)
+            
+        super().save(*args, **kwargs)
 
 # ==========================================
 # 2. ОСНОВНАЯ МОДЕЛЬ ЗАДАЧИ
@@ -196,5 +224,4 @@ class Task(models.Model):
         ordering = ['task_number__number', '-created_at']
 
     def __str__(self):
-        # Формируем красивое название для админки
         return f'Задача {self.task_number.number} (ID: {self.id})'

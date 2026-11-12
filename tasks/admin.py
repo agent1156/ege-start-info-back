@@ -15,9 +15,25 @@ class TaskDifficultyAdmin(admin.ModelAdmin):
 
 @admin.register(TaskNumber)
 class TaskNumberAdmin(admin.ModelAdmin):
-    list_display = ('number', 'topic')
+    # Показываем номер, тему, баллы и слаг в списке
+    list_display = ('number', 'topic', 'max_score', 'slug')
+    
+    # Добавляем фильтры и поиск
+    list_filter = ('max_score',)
+    search_fields = ('number', 'topic', 'slug')
+    
+    # Группируем поля в форме редактирования
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('number', 'topic')
+        }),
+        ('Настройки ЕГЭ', {
+            'fields': ('max_score', 'slug'),
+            'description': 'Первичный балл и ЧПУ (генерируется автоматически, если оставить пустым)'
+        }),
+    )
+    
     ordering = ('number',)
-    search_fields = ('number', 'topic')
 
 
 # ============ Задачи ============
