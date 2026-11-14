@@ -63,7 +63,7 @@ class TaskAdmin(admin.ModelAdmin):
             'fields': ('external_id', 'task_number', 'year', 'task_type', 'difficulty')
         }),
         ('Условие и файлы', {
-            'fields': ('text', 'image', 'image_url')
+            'fields': ('text', 'image','attachment', 'image_url')
         }),
         ('Решение', {
             'fields': ('answer', 'video_url')

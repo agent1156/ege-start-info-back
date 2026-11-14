@@ -14,7 +14,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # Берем только те задачи, у которых есть ссылка на картинку
         qs = Task.objects.exclude(image_url='')
+        
+        # Если не указан --force, качаем только те, где картинки еще нет
         if not options['force']:
             qs = qs.filter(image='')
 
@@ -24,16 +27,21 @@ class Command(BaseCommand):
         ok = fail = 0
         for i, task in enumerate(qs.iterator(), 1):
             try:
-                resp = requests.get(task.image_url, timeout=20)
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Referer': 'https://kpolyakov.spb.ru/'
+                }
+                resp = requests.get(task.image_url, headers=headers, timeout=20)
                 resp.raise_for_status()
 
-                # имя файла из URL (9296.gif)
+                # Имя файла из URL (например, 9296.gif)
                 filename = task.image_url.rsplit('/', 1)[-1]
 
-                # если файл уже есть — удаляем старый, чтобы не плодить копии
+                # Если файл уже есть — удаляем старый, чтобы не плодить копии
                 if task.image:
                     task.image.delete(save=False)
 
+                # Сохраняем файл в поле ImageField
                 task.image.save(filename, ContentFile(resp.content), save=True)
                 ok += 1
                 self.stdout.write(

@@ -192,6 +192,13 @@ class Task(models.Model):
         null=True,
         help_text='Схема, график, таблица и т.д.'
     )
+    attachment = models.FileField(
+        upload_to='tasks/attachments/',
+        verbose_name='Файл для решения',
+        blank=True,
+        null=True,
+        help_text='Документ, таблица или архив с данными для задачи'
+    )
 
     answer = models.CharField(
         max_length=255, 
