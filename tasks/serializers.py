@@ -13,14 +13,15 @@ class TaskSerializer(serializers.ModelSerializer):
     # Достаем год из связанной таблицы TaskYear
     year = serializers.IntegerField(source='year.year', read_only=True, allow_null=True)
     
-    # Кастомное поле для картинки
+    # Кастомные поля
     image = serializers.SerializerMethodField()
+    attachment = serializers.SerializerMethodField() 
 
     class Meta:
         model = Task
         fields = (
             'id', 'external_id', 'task_number', 'task_slug', 'max_score', 
-            'task_topic', 'year', 'text', 'answer', 'image', 'image_url', 'video_url',
+            'task_topic', 'year', 'text', 'answer', 'image', 'image_url', 'attachment','video_url',
         )
 
     def get_image(self, obj):
@@ -29,6 +30,14 @@ class TaskSerializer(serializers.ModelSerializer):
             url = obj.image.url
             return request.build_absolute_uri(url) if request else url
         return obj.image_url or ''
+
+    # ===== ВОТ ЭТОГО МЕТОДА НЕ ХВАТАЛО =====
+    def get_attachment(self, obj):
+        if obj.attachment:
+            request = self.context.get('request')
+            url = obj.attachment.url
+            return request.build_absolute_uri(url) if request else url
+        return None
 
 
 # 2. Сериализатор для справочника заданий (для главной страницы с 27 карточками)

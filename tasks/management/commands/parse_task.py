@@ -1,7 +1,9 @@
 import re
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 from django.core.management.base import BaseCommand
+from django.core.files.base import ContentFile
 from tasks.models import Task, TaskNumber, TaskYear, TaskType, TaskDifficulty
 
 
@@ -14,10 +16,13 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         task_num_id = kwargs['task']
         
-        # Словарь правильных URL-параметров для каждого задания
         CAT_MAP = {
             1: 'cat12=on&cat13=on',
             2: 'cat8=on',
+            3: 'cat169=on',
+            4: 'cat21=on&cat22=on&cat23=on&cat25=on&cat166=on',
+            5: 'cat27=on&cat28=on&cat144=on',
+            6: 'cat175=on&cat179=on&cat180=on',
         }
         cat_params = CAT_MAP.get(task_num_id, 'cat12=on&cat13=on')
         
@@ -47,14 +52,11 @@ class Command(BaseCommand):
         )
 
         count = 0
-        rows_processed = 0
-
         for row in soup.find_all('tr'):
             topic_cell = row.find('td', class_='topicview')
             if not topic_cell:
                 continue
 
-            rows_processed += 1
             js_code = str(topic_cell)
 
             # 1. Номер задачи
@@ -66,7 +68,6 @@ class Command(BaseCommand):
             # 2. Текст задачи
             text_match = re.search(r"document\.write\(\s*changeImageFilePath\(['\"](.*?)['\"]\)\s*\);", js_code, re.DOTALL)
             if not text_match:
-                self.stdout.write(self.style.WARNING(f'Задача №{task_id}: не найден текст в скрипте'))
                 continue
             raw_text = text_match.group(1)
 
@@ -86,30 +87,60 @@ class Command(BaseCommand):
                 image_url = base_images + filename
                 raw_text = raw_text.replace(img_match.group(0), '').strip()
 
-            # 5. Очистка текста
-            clean_text = BeautifulSoup(raw_text, 'html.parser').get_text(' ', strip=True)
+            # 5. ФАЙЛ
+            attachment_url = ''
+            file_match = re.search(r'<a\s+href=["\']([^"\']+\.(?:xlsx|xls|ods|csv|doc|docx|txt|zip|rar))["\']', raw_text)
+            
+            if file_match:
+                relative_src = file_match.group(1)
+                
+                if 'ege-dbase' in relative_src:
+                    attachment_url = f'https://kpolyakov.spb.ru/cms/files/{relative_src}'
+                elif 'cms/files' in relative_src:
+                    attachment_url = relative_src.replace('../../', 'https://kpolyakov.spb.ru/')
+                else:
+                    attachment_url = f'https://kpolyakov.spb.ru/school/ege/{relative_src}'
+                    
+                raw_text = raw_text.replace(file_match.group(0), '').strip()
 
-            # 6. Ответ (универсальный поиск)
+                        # 6. ОЧИСТКА ТЕКСТА (СОХРАНЕНИЕ СТРУКТУРЫ)
+            
+            # 1. Заменяем теги <br> и <br/> на переносы строк
+            raw_text = re.sub(r'<br\s*/?>', '\n', raw_text, flags=re.IGNORECASE)
+            
+            # 2. Оборачиваем блоки <pre> в переносы (до и после), чтобы отделить код от текста
+            raw_text = re.sub(r'<pre[^>]*>', '\n', raw_text, flags=re.IGNORECASE)
+            raw_text = re.sub(r'</pre>', '\n', raw_text, flags=re.IGNORECASE)
+            
+            # 3. Создаем BeautifulSoup для извлечения чистого текста
+            soup_text = BeautifulSoup(raw_text, 'html.parser')
+            
+            # 4. Извлекаем текст. separator='' не добавляет лишние пробелы
+            clean_text = soup_text.get_text(separator='')
+            
+            # 5. Убираем лишние пустые строки (если их больше двух подряд)
+            clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
+            
+            # 6. Убираем лишние пробелы внутри строк, но оставляем переносы
+            clean_text = '\n'.join([line.strip() for line in clean_text.split('\n')])
+            
+            # 7. Финальная зачистка пустых строк в начале и конце
+            clean_text = clean_text.strip()
+
+            # 7. Ответ
             answer = ''
             answer_row = row.find_next_sibling('tr')
             if answer_row and answer_row.find('td', class_='answer'):
                 ans_div = answer_row.find('div', class_='hidedata')
                 if ans_div:
                     ans_html = str(ans_div)
-                    
-                    # Ищем changeImageFilePath с любыми кавычками
                     ans_match = re.search(r"changeImageFilePath\(\s*['\"](.*?)['\"]\s*\)", ans_html, re.DOTALL)
-                    
                     if ans_match:
                         answer = ans_match.group(1).strip()
-                    else:
-                        # Если не нашли в скрипте, берем просто текст из div
-                        clean_div = re.sub(r'<script.*?</script>', '', ans_html, flags=re.DOTALL)
-                        answer = BeautifulSoup(clean_div, 'html.parser').get_text(strip=True)
 
-            # 7. Сохранение
+            # 8. СОХРАНЕНИЕ
             if not Task.objects.filter(external_id=task_id).exists():
-                Task.objects.create(
+                task = Task.objects.create(
                     external_id=task_id,
                     task_number=task_num,
                     year=year,
@@ -119,10 +150,26 @@ class Command(BaseCommand):
                     answer=answer,
                     image_url=image_url,
                 )
+
+                # Скачиваем файл, если он есть
+                if attachment_url:
+                    try:
+                        file_resp = requests.get(attachment_url, headers=headers, timeout=20)
+                        file_resp.raise_for_status()
+                        filename = attachment_url.rsplit('/', 1)[-1]
+                        task.attachment.save(filename, ContentFile(file_resp.content), save=True)
+                        self.stdout.write(self.style.SUCCESS(f'  -> Файл {filename} скачан'))
+                    except requests.exceptions.HTTPError as e:
+                        if e.response.status_code == 404:
+                            self.stdout.write(self.style.WARNING(f'  -> Файл не найден на сервере (404), пропускаем'))
+                        else:
+                            self.stderr.write(f'  -> Ошибка скачивания файла: {e}')
+                    except Exception as e:
+                        self.stderr.write(f'  -> Ошибка: {e}')
+
                 count += 1
-                self.stdout.write(self.style.SUCCESS(f'Сохранена задача №{task_id} | Ответ: {answer}'))
+                self.stdout.write(self.style.SUCCESS(f'Сохранена задача №{task_id}'))
             else:
                 self.stdout.write(f'Пропуск №{task_id} (уже есть)')
 
-        self.stdout.write(f'Всего найдено ячеек с задачами: {rows_processed}')
         self.stdout.write(self.style.SUCCESS(f'Готово! Добавлено: {count}'))
