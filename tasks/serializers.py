@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Task, TaskNumber
 
 
-# 1. Сериализатор для одной задачи (используется внутри задания и в общем списке)
+# 1. Сериализатор для одной задачи
 class TaskSerializer(serializers.ModelSerializer):
     # Достаем данные из связанной таблицы TaskNumber
     task_number = serializers.IntegerField(source='task_number.number', read_only=True)
@@ -13,6 +13,9 @@ class TaskSerializer(serializers.ModelSerializer):
     # Достаем год из связанной таблицы TaskYear
     year = serializers.IntegerField(source='year.year', read_only=True, allow_null=True)
     
+    # ВОТ ЭТОГО НЕ ХВАТАЛО! Достаем тип задачи из связанной таблицы TaskType
+    type_name = serializers.CharField(source='task_type.name', read_only=True, allow_null=True)
+    
     # Кастомные поля
     image = serializers.SerializerMethodField()
     attachment = serializers.SerializerMethodField() 
@@ -21,6 +24,7 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Task
         fields = (
             'id', 'external_id', 'task_number', 'task_slug', 'max_score', 
+            'type_name', # Теперь это поле объявлено выше
             'task_topic', 'year', 'text', 'answer', 'image', 'image_url', 'attachment','video_url',
         )
 
@@ -31,7 +35,6 @@ class TaskSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(url) if request else url
         return obj.image_url or ''
 
-    # ===== ВОТ ЭТОГО МЕТОДА НЕ ХВАТАЛО =====
     def get_attachment(self, obj):
         if obj.attachment:
             request = self.context.get('request')
@@ -40,7 +43,7 @@ class TaskSerializer(serializers.ModelSerializer):
         return None
 
 
-# 2. Сериализатор для справочника заданий (для главной страницы с 27 карточками)
+# 2. Сериализатор для справочника заданий
 class TaskNumberSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskNumber

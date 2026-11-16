@@ -1,68 +1,64 @@
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from django.db.models import Q
-from .models import Task, TaskNumber
+from .models import Task, TaskNumber, TaskYear, TaskType, TaskDifficulty
 from .serializers import TaskSerializer, TaskNumberSerializer
 
 
 class TaskNumberViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Эндпоинт для главной страницы: отдает все 27 заданий (тема, балл, слаг).
-    Пример: GET /api/task-numbers/
+    Эндпоинт для главной страницы: отдает все 27 заданий.
     """
     queryset = TaskNumber.objects.all()
     serializer_class = TaskNumberSerializer
-    pagination_class = None # Отключаем пагинацию, чтобы отдать все 27
+    pagination_class = None
 
 
 class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Эндпоинт для детальной страницы: отдает задачи.
-    Пример: GET /api/tasks/?task_slug=analiz-informatsionnyih-modelej
+    Эндпоинт для задач с фильтрацией.
     """
     serializer_class = TaskSerializer
     pagination_class = PageNumberPagination
-    queryset = Task.objects.all() # Нужно для DRF
+    queryset = Task.objects.all()
 
     def get_queryset(self):
-        qs = Task.objects.select_related('task_number', 'year').order_by('-external_id')
+        qs = Task.objects.select_related('task_number', 'year', 'task_type', 'difficulty').order_by('-external_id')
 
-        # 1. Фильтр по слагу задания (для страницы задания)
         task_slug = self.request.query_params.get('task_slug')
         if task_slug:
             qs = qs.filter(task_number__slug=task_slug)
 
-        # 2. ФИЛЬТР ПО ГОДУ
         year = self.request.query_params.get('year')
         if year:
             qs = qs.filter(year__year=year)
-            
-        # 3. ФИЛЬТР ПО ТИПУ ЗАДАЧИ (ЕГЭ/ОГЭ)
+
         task_type = self.request.query_params.get('type')
         if task_type:
             qs = qs.filter(task_type__name=task_type)
 
-        return qs
-        qs = Task.objects.select_related('task_number', 'year').order_by('-external_id')
-
-        # 1. Фильтр по слагу задания (используется на детальной странице /tasks/[slug])
-        task_slug = self.request.query_params.get('task_slug')
-        if task_slug:
-            qs = qs.filter(task_number__slug=task_slug)
-
-        # 2. Фильтр по номеру задания (например, ?task_number=1)
-        task_number = self.request.query_params.get('task_number')
-        if task_number:
-            qs = qs.filter(task_number__number=task_number)
-
-        # 3. Поиск по тексту задачи (для строки поиска)
-        search = self.request.query_params.get('search')
-        if search:
-            qs = qs.filter(Q(text__icontains=search) | Q(answer__icontains=search))
-
-        # 4. Фильтр по году
-        year = self.request.query_params.get('year')
-        if year:
-            qs = qs.filter(year__year=year)
+        difficulty = self.request.query_params.get('difficulty')
+        if difficulty:
+            qs = qs.filter(difficulty__name=difficulty)
 
         return qs
+
+
+class FilterOptionsView(APIView):
+    """
+    Эндпоинт для получения доступных фильтров.
+    Возвращает только те года, типы и сложности, которые реально есть в базе.
+    """
+    def get(self, request):
+        # Достаем уникальные значения из связанных таблиц
+        years = TaskYear.objects.all().order_by('-year').values_list('year', flat=True)
+        types = TaskType.objects.all().values_list('name', flat=True)
+        difficulties = TaskDifficulty.objects.all().values_list('name', flat=True)
+
+        return Response({
+            'years': list(years),
+            'types': list(types),
+            'difficulties': list(difficulties)
+        })
