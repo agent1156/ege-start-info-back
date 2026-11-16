@@ -27,6 +27,24 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = Task.objects.select_related('task_number', 'year').order_by('-external_id')
 
+        # 1. Фильтр по слагу задания (для страницы задания)
+        task_slug = self.request.query_params.get('task_slug')
+        if task_slug:
+            qs = qs.filter(task_number__slug=task_slug)
+
+        # 2. ФИЛЬТР ПО ГОДУ
+        year = self.request.query_params.get('year')
+        if year:
+            qs = qs.filter(year__year=year)
+            
+        # 3. ФИЛЬТР ПО ТИПУ ЗАДАЧИ (ЕГЭ/ОГЭ)
+        task_type = self.request.query_params.get('type')
+        if task_type:
+            qs = qs.filter(task_type__name=task_type)
+
+        return qs
+        qs = Task.objects.select_related('task_number', 'year').order_by('-external_id')
+
         # 1. Фильтр по слагу задания (используется на детальной странице /tasks/[slug])
         task_slug = self.request.query_params.get('task_slug')
         if task_slug:

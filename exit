@@ -1,0 +1,71 @@
+[33mcommit a64107a0e368cfe9c6595477037462bde73ffc11[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Sat Nov 14 13:40:48 2026 +0300
+
+    Добавил в сериалайс файл с задачей
+
+[33mcommit ac01d67011aa0a00bfc93d438a2259c4ca12e86c[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Sat Nov 14 10:29:29 2026 +0300
+
+    Доработал админку, добавил поле файл
+
+[33mcommit 0b80d175f44f5ad7ae847cf47f603411a95cdeae[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Thu Nov 12 13:23:51 2026 +0300
+
+    Задачи выводятся в списке задач и на детальной
+
+[33mcommit 6d8d7d33bb5d6a226fad6a275a072dca0d37ee09[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Thu Nov 12 11:24:01 2026 +0300
+
+    Доработал сериалайс
+
+[33mcommit dc770d9519398ecef6ba7b8bdfc0385fc161d194[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Thu Nov 12 10:33:21 2026 +0300
+
+    Исправил слаг в базе
+
+[33mcommit 4a24aa39418a8dabadf2b38399528dd9d52583e4[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Tue Nov 10 10:01:28 2026 +0300
+
+    Создать парсер для копирования первой задачи
+
+[33mcommit 0ba443935897c55efa877b3c259d06e44b00cd32[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Mon Nov 9 13:14:14 2026 +0300
+
+    Создал модель задачи
+
+[33mcommit baa038bba67461c01ff22fdee55cd7f014edd00e[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Sat Nov 7 10:01:31 2026 +0300
+
+    внедрить новую админку
+
+[33mcommit a2a0d652fe89ffe511415e008d7e2331d1f3afb8[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Sat Nov 7 09:53:32 2026 +0300
+
+    Создать api для формы
+
+[33mcommit cbb59eb229a23260bfe2f503506f5933e660fc1c[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Sat Nov 7 09:29:08 2026 +0300
+
+    Создал форму обратной связи
+
+[33mcommit da4d40359c2fefed7cbea463ecfd37458359cb81[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Sat Nov 7 08:52:34 2026 +0300
+
+    Настроил файл джанго
+
+[33mcommit ee197ddf4b51632e22be7991a920e8fbb4769d38[m
+Author: unknown <agent1156@yandex.ru>
+Date:   Fri Nov 6 12:16:19 2026 +0300
+
+    first commit
