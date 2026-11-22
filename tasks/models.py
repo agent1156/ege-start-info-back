@@ -69,7 +69,26 @@ class TaskDifficulty(models.Model):
 
 class TaskNumber(models.Model):
     """Справочник номеров заданий ЕГЭ (1-27)"""
-    
+
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name='Активно',
+        help_text='Если снять галочку, задание скроется с сайта'
+    )
+     # ===== ОСНОВНЫЕ ПОЛЯ =====
+    title = models.CharField(
+        max_length=255, 
+        blank=True, 
+        default='', 
+        verbose_name='Название задачи',
+        help_text='Короткое название или заголовок условия'
+    )
+
+    order = models.PositiveSmallIntegerField(
+            default=0,
+            verbose_name='Порядок сортировки',
+            help_text='Чем меньше число, тем выше задание в списке'
+        )
     number = models.PositiveSmallIntegerField(
         unique=True, 
         verbose_name='Номер задания (1-27)'
@@ -99,7 +118,7 @@ class TaskNumber(models.Model):
     class Meta:
         verbose_name = 'Номер задания'
         verbose_name_plural = 'Номера заданий (справочник)'
-        ordering = ['number']
+        ordering = ["order",'number']
 
     def __str__(self):
         if self.topic:
@@ -126,7 +145,11 @@ class TaskNumber(models.Model):
 
 class Task(models.Model):
     """Модель для задач ЕГЭ"""
-    
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name='Активно',
+        help_text='Если снять галочку, задача скроется с сайта'
+    )
     # ===== СВЯЗИ (Внешние ключи) =====
     task_number = models.ForeignKey(
         TaskNumber, 

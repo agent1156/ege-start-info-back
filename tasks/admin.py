@@ -15,17 +15,21 @@ class TaskDifficultyAdmin(admin.ModelAdmin):
 
 @admin.register(TaskNumber)
 class TaskNumberAdmin(admin.ModelAdmin):
-    # Показываем номер, тему, баллы и слаг в списке
-    list_display = ('number', 'topic', 'max_score', 'slug')
+    # 'number' должен быть первым, так как он служит ссылкой на редактирование.
+    list_display = ('number', 'title', 'order', 'topic', 'max_score', 'slug', 'is_active')
+    
+    # Позволяет менять поле order и is_active прямо в общем списке
+    list_editable = ('order', 'is_active')
     
     # Добавляем фильтры и поиск
-    list_filter = ('max_score',)
-    search_fields = ('number', 'topic', 'slug')
+    list_filter = ('max_score', 'is_active')
+    search_fields = ('title', 'number', 'topic', 'slug')
     
     # Группируем поля в форме редактирования
     fieldsets = (
         ('Основная информация', {
-            'fields': ('number', 'topic')
+            # ВОТ ЗДЕСЬ БЫЛА ОШИБКА — ТЕПЕРЬ ЗАПЯТАЯ НА МЕСТЕ
+            'fields': ('number', 'order', 'title', 'topic', 'is_active')
         }),
         ('Настройки ЕГЭ', {
             'fields': ('max_score', 'slug'),
@@ -33,7 +37,8 @@ class TaskNumberAdmin(admin.ModelAdmin):
         }),
     )
     
-    ordering = ('number',)
+    # Сортируем сначала по order, а если order одинаковый — по number
+    ordering = ('order', 'number')
 
 
 # ============ Задачи ============
@@ -48,22 +53,23 @@ class TaskAdmin(admin.ModelAdmin):
         'task_type',
         'difficulty',
         'answer',
-        'has_image',            # ← теперь проверяет image ИЛИ image_url
+        'has_image',            # ← проверяет image ИЛИ image_url
         'has_video',
+        'is_active',
     )
-    list_filter = ('task_number', 'year', 'task_type', 'difficulty')
+    list_filter = ('task_number', 'year', 'task_type', 'difficulty', 'is_active')
     search_fields = ('external_id', 'text', 'answer', 'image_url')
-    list_editable = ('difficulty',)
+    list_editable = ('difficulty', 'is_active')
     list_display_links = ('id', 'external_id')
     ordering = ('-external_id',)
     readonly_fields = ('created_at', 'updated_at')
 
     fieldsets = (
         ('Классификация', {
-            'fields': ('external_id', 'task_number', 'year', 'task_type', 'difficulty')
+            'fields': ('external_id', 'task_number', 'year', 'task_type', 'difficulty', 'is_active')
         }),
         ('Условие и файлы', {
-            'fields': ('text', 'image','attachment', 'image_url')
+            'fields': ('text', 'image', 'attachment', 'image_url')
         }),
         ('Решение', {
             'fields': ('answer', 'video_url')
@@ -75,7 +81,6 @@ class TaskAdmin(admin.ModelAdmin):
     )
 
     def has_image(self, obj):
-        # показываем True, если есть файл ИЛИ ссылка
         return bool(obj.image) or bool(obj.image_url)
     has_image.boolean = True
     has_image.short_description = 'Картинка'

@@ -1,7 +1,6 @@
 import re
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from tasks.models import Task, TaskNumber, TaskYear, TaskType, TaskDifficulty
@@ -23,6 +22,24 @@ class Command(BaseCommand):
             4: 'cat21=on&cat22=on&cat23=on&cat25=on&cat166=on',
             5: 'cat27=on&cat28=on&cat144=on',
             6: 'cat175=on&cat179=on&cat180=on',
+            7: 'cat38=on&cat39=on&cat184=on',
+            8: 'cat42=on&cat43=on&cat145=on',
+            9: 'cat146=on&cat147=on', 
+            10: 'cat148=on',
+            11: 'cat52=on&cat53=on&cat54=on&cat149=on',
+            12: 'cat186=on',
+            13: 'cat48=on&cat49=on&cat50=on&cat51=on&cat177=on&cat185=on', 
+            14: 'cat60=on&cat61=on&cat62=on&cat174=on&cat182=on',
+            15: 'cat67=on&cat68=on&cat69=on&cat70=on&cat123=on&cat167=on', 
+            16: 'cat44=on&cat45=on&cat46=on&cat181=on',
+            17: 'cat168=on&cat170=on',
+            18: 'cat152=on&cat153=on&cat165=on',
+            22: 'cat176=on',
+            23: 'cat78=on&cat79=on&cat80=on&cat162=on',
+            24: 'cat155=on&cat156=on&cat164=on', 
+            25: 'cat157=on&cat158=on&cat159=on&cat172=on',
+            26: 'cat160=on',
+            27: 'cat134=on&cat183=on',
         }
         cat_params = CAT_MAP.get(task_num_id, 'cat12=on&cat13=on')
         
@@ -87,44 +104,42 @@ class Command(BaseCommand):
                 image_url = base_images + filename
                 raw_text = raw_text.replace(img_match.group(0), '').strip()
 
-            # 5. ФАЙЛ
+                        # 5. ФАЙЛ
             attachment_url = ''
-            file_match = re.search(r'<a\s+href=["\']([^"\']+\.(?:xlsx|xls|ods|csv|doc|docx|txt|zip|rar))["\']', raw_text)
+            file_match = re.search(r'<a\s+href=["\']([^"\']+\.(?:xlsx|xls|ods|odt|csv|doc|docx|txt|zip|rar|7z|py))["\']', raw_text)
             
             if file_match:
                 relative_src = file_match.group(1)
                 
-                if 'ege-dbase' in relative_src:
-                    attachment_url = f'https://kpolyakov.spb.ru/cms/files/{relative_src}'
-                elif 'cms/files' in relative_src:
-                    attachment_url = relative_src.replace('../../', 'https://kpolyakov.spb.ru/')
+                # Очищаем путь от ../../ и лишних слешей в начале
+                clean_src = relative_src.replace('../../', '').lstrip('/')
+                
+                # Корректная сборка URL в зависимости от структуры пути
+                if clean_src.startswith('cms/'):
+                    attachment_url = f'https://kpolyakov.spb.ru/{clean_src}'
+                elif 'files/' in clean_src or 'ege-' in clean_src:
+                    # Если в пути есть 'files/' или любая папка с 'ege-' (ege-seq, ege-xls и т.д.)
+                    if clean_src.startswith('cms/'):
+                        attachment_url = f'https://kpolyakov.spb.ru/{clean_src}'
+                    else:
+                        attachment_url = f'https://kpolyakov.spb.ru/cms/files/{clean_src}'
                 else:
-                    attachment_url = f'https://kpolyakov.spb.ru/school/ege/{relative_src}'
+                    attachment_url = f'https://kpolyakov.spb.ru/school/ege/{clean_src}'
                     
+                # Убираем ссылку из текста
                 raw_text = raw_text.replace(file_match.group(0), '').strip()
-
-                        # 6. ОЧИСТКА ТЕКСТА (СОХРАНЕНИЕ СТРУКТУРЫ)
-            
-            # 1. Заменяем теги <br> и <br/> на переносы строк
+            # 6. ОЧИСТКА ТЕКСТА
             raw_text = re.sub(r'<br\s*/?>', '\n', raw_text, flags=re.IGNORECASE)
-            
-            # 2. Оборачиваем блоки <pre> в переносы (до и после), чтобы отделить код от текста
             raw_text = re.sub(r'<pre[^>]*>', '\n', raw_text, flags=re.IGNORECASE)
             raw_text = re.sub(r'</pre>', '\n', raw_text, flags=re.IGNORECASE)
+            raw_text = re.sub(r'<p[^>]*class=["\']formula["\'][^>]*>', '\n', raw_text, flags=re.IGNORECASE)
+            raw_text = re.sub(r'</p>', '\n', raw_text, flags=re.IGNORECASE)
             
-            # 3. Создаем BeautifulSoup для извлечения чистого текста
             soup_text = BeautifulSoup(raw_text, 'html.parser')
-            
-            # 4. Извлекаем текст. separator='' не добавляет лишние пробелы
             clean_text = soup_text.get_text(separator='')
             
-            # 5. Убираем лишние пустые строки (если их больше двух подряд)
             clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
-            
-            # 6. Убираем лишние пробелы внутри строк, но оставляем переносы
             clean_text = '\n'.join([line.strip() for line in clean_text.split('\n')])
-            
-            # 7. Финальная зачистка пустых строк в начале и конце
             clean_text = clean_text.strip()
 
             # 7. Ответ
@@ -154,6 +169,9 @@ class Command(BaseCommand):
                 # Скачиваем файл, если он есть
                 if attachment_url:
                     try:
+                        #Отладка: смотрим, что скачиваем
+                        self.stdout.write(f"  -> Пробую скачать: {attachment_url}")
+                        
                         file_resp = requests.get(attachment_url, headers=headers, timeout=20)
                         file_resp.raise_for_status()
                         filename = attachment_url.rsplit('/', 1)[-1]
@@ -161,7 +179,7 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.SUCCESS(f'  -> Файл {filename} скачан'))
                     except requests.exceptions.HTTPError as e:
                         if e.response.status_code == 404:
-                            self.stdout.write(self.style.WARNING(f'  -> Файл не найден на сервере (404), пропускаем'))
+                            self.stdout.write(self.style.WARNING(f'  -> Файл 404: {attachment_url}'))
                         else:
                             self.stderr.write(f'  -> Ошибка скачивания файла: {e}')
                     except Exception as e:
