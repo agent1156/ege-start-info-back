@@ -47,4 +47,4 @@ class TaskSerializer(serializers.ModelSerializer):
 class TaskNumberSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskNumber
-        fields = ('number', 'topic', 'max_score', 'slug')
+        fields = ('number', 'topic', 'max_score', 'slug','title')
