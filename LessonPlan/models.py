@@ -110,6 +110,13 @@ class LessonTag(BaseCatalogModel):
         verbose_name_plural = 'Теги уроков'
 
 
+class SchoolClass(BaseCatalogModel):
+    """Справочник классов (например, 10 класс, 11 класс)"""
+    class Meta(BaseCatalogModel.Meta):
+        verbose_name = 'Класс'
+        verbose_name_plural = 'Классы'
+
+
 # ==========================================
 # 2. ПЛАН УРОКА (Основная модель)
 # ==========================================
@@ -142,18 +149,20 @@ class LessonPlan(BaseCatalogModel):
         related_name='lesson_plans',
         verbose_name='Тип экзамена (ЕГЭ/ОГЭ)'
     )
+    
+    # Связи ManyToMany
     tags = models.ManyToManyField(
         LessonTag,
         blank=True,
         related_name='lesson_plans',
         verbose_name='Теги'
     )
-    slug = models.SlugField(
-            max_length=255, 
-            unique=True,
-            blank=True,
-            verbose_name='ЧПУ (URL)',
-            help_text='Генерируется автоматически'
+    school_classes = models.ManyToManyField(
+        SchoolClass,
+        blank=True,
+        related_name='lesson_plans',
+        verbose_name='Классы',
+        help_text='Для каких классов подходит этот урок'
     )
 
     # Дополнительные поля

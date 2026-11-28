@@ -4,6 +4,7 @@ from .models import (
     LessonDifficulty, 
     ExamType, 
     LessonTag, 
+    SchoolClass, 
     LessonPlan
 )
 
@@ -14,9 +15,9 @@ from .models import (
 @admin.register(InfoTopic)
 class InfoTopicAdmin(admin.ModelAdmin):
     list_display = ('title', 'number', 'sort', 'is_active')
-    list_editable = ('sort', 'is_active') # Можно менять прямо в списке
+    list_editable = ('sort', 'is_active')
     search_fields = ('title', 'description')
-    prepopulated_fields = {'slug': ('title',)} # Автозаполнение слага при вводе
+    prepopulated_fields = {'slug': ('title',)}
 
 @admin.register(LessonDifficulty)
 class LessonDifficultyAdmin(admin.ModelAdmin):
@@ -35,6 +36,14 @@ class LessonTagAdmin(admin.ModelAdmin):
     list_display = ('title', 'number', 'sort', 'is_active')
     list_editable = ('sort', 'is_active')
     search_fields = ('title',)
+
+# НОВАЯ РЕГИСТРАЦИЯ: КЛАССЫ
+@admin.register(SchoolClass)
+class SchoolClassAdmin(admin.ModelAdmin):
+    list_display = ('title', 'number', 'sort', 'is_active')
+    list_editable = ('sort', 'is_active')
+    search_fields = ('title', 'description')
+    prepopulated_fields = {'slug': ('title',)}
 
 
 # ==========================================
@@ -55,7 +64,7 @@ class LessonPlanAdmin(admin.ModelAdmin):
     )
     
     # Фильтры справа
-    list_filter = ('topic', 'difficulty', 'exam_type', 'is_active')
+    list_filter = ('topic', 'difficulty', 'exam_type', 'school_classes', 'is_active')
     
     # Поиск
     search_fields = ('title', 'description')
@@ -63,8 +72,8 @@ class LessonPlanAdmin(admin.ModelAdmin):
     # Возможность менять сортировку и активность прямо из списка
     list_editable = ('sort', 'is_active')
     
-    # Удобный виджет для выбора тегов (два окна со стрелочками)
-    filter_horizontal = ('tags',)
+    # Удобный виджет для выбора тегов и классов
+    filter_horizontal = ('tags', 'school_classes')
     
     # Группировка полей в карточке редактирования
     fieldsets = (
@@ -72,7 +81,7 @@ class LessonPlanAdmin(admin.ModelAdmin):
             'fields': ('title', 'number', 'description', 'sort', 'is_active')
         }),
         ('Связи', {
-            'fields': ('topic', 'difficulty', 'exam_type', 'tags')
+            'fields': ('topic', 'difficulty', 'exam_type', 'tags', 'school_classes')
         }),
         ('Медиа и файлы', {
             'fields': ('preview_image', 'detail_image', 'download_file', 'slug')
