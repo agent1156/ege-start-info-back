@@ -21,7 +21,7 @@ urlpatterns = [
     
     # API задач (генерируется роутером)
     path('api/', include(router.urls)),
-    
+    path('api/', include('LessonPlan.urls')), 
     # НОВЫЙ ПУТЬ ДЛЯ СПИСКА ФИЛЬТРОВ
     path('api/filters/', FilterOptionsView.as_view(), name='filter-options'),
 ]
